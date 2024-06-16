@@ -18,6 +18,7 @@ struct listNode{
 class singleList{
 private:
     listNode* head;
+    listNode* rear; // - 尾指针,为配合循环链表
     int length;
 public:
     singleList();
@@ -34,6 +35,8 @@ public:
     void listDelete(int a);
     void listPrintName();
     void listPrintNumber();
+    listNode* getRear();
+    void mergeList(singleList &B);
 };
 
 // - 单链表初始化
@@ -143,6 +146,16 @@ void singleList::listDelete(int a){
     delete mid;
     length--;
 }
+// - 为尾指针赋值
+listNode* singleList::getRear(){
+    listNode* curr = head;
+    while(curr->next!=nullptr){
+        curr = curr->next;
+    }
+    rear = curr;
+    rear->next = head->next;
+    return rear;
+}
 // - 测试函数
 void singleList::listPrintName(){
     listNode* curr = head->next;
@@ -186,9 +199,21 @@ void createList_t(int n,singleList &a){
     }
     t->next = nullptr;
 }
+// - 合并俩链表
+void singleList::mergeList(singleList &B){
+    listNode* curr = head;
+    for(int i=0;i<length;++i){
+        curr = curr->next;
+    }
+    length += B.listLength();
+    curr->next = B.getHead()->next;
+}
 int main(){
-    singleList A;
-    elemtype a(1,"a"),b(2,"b"),c(3,"c"),d(4,"d"),e(5,"e");
+    singleList A,B,C;
+    elemtype a(1,"a"),b(2,"b"),c(3,"c"),d(4,"d"),e(5,"e"),f(6,"f");
     createList_t(5, A);
-    A.listPrintNumber();
+    createList_t(5, B);
+    A.mergeList(B);
+    A.listPrintName();
+    B.listPrintName();
 }
