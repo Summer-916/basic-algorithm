@@ -4,10 +4,10 @@
 using namespace std;
 
 struct elemtype{
-    int number;
-    string name;
+    int coefficient;
+    int power;
     elemtype(){}
-    elemtype(int a,string b):number(a),name(b){}
+    elemtype(int a,int b):coefficient(a),power(b){}
 };
 
 struct listNode{
@@ -33,8 +33,7 @@ public:
     int indexSearch(elemtype a);
     void listInsert(int a, elemtype b);
     void listDelete(int a);
-    void listPrintName();
-    void listPrintNumber();
+    void printPolynomial();
     listNode* getRear();
 };
 
@@ -96,7 +95,7 @@ elemtype singleList::getValue(int a){
 listNode* singleList::addressSearch(elemtype a){
     listNode* curr = head->next;
     while(curr!=nullptr){
-        if(curr->data.number == a.number && curr->data.name == a.name) return curr;
+        if(curr->data.coefficient == a.coefficient && curr->data.power == a.power) return curr;
         curr = curr->next;
     }
     return nullptr;
@@ -107,7 +106,7 @@ int singleList::indexSearch(elemtype a){
     listNode* curr = head->next;
     while(curr!=nullptr){
         index++;
-        if(curr->data.number == a.number && curr->data.name == a.name) return index;
+        if(curr->data.coefficient == a.coefficient && curr->data.power == a.power) return index;
         curr = curr->next;
     }
     return 0;
@@ -154,19 +153,22 @@ listNode* singleList::getRear(){
     return rear;
 }
 // - 测试函数
-void singleList::listPrintName(){
+void singleList::printPolynomial(){
     listNode* curr = head->next;
-    while(curr!=nullptr){
-        cout<<curr->data.name<<endl;
+    if(curr){
+        if(curr->data.coefficient == 1) cout<<"x^"<<curr->data.power;
+        else if(curr->data.coefficient == -1) cout<<"-x^"<<curr->data.power;
+        else cout<<curr->data.coefficient<<"x^"<<curr->data.power;
         curr = curr->next;
+        while(curr){
+            if(curr->data.coefficient == -1) cout<<"-x^"<<curr->data.power;
+            else if(curr->data.coefficient == 1) cout<<"x^"<<curr->data.power;
+            else if(curr->data.coefficient<0) cout<<curr->data.coefficient<<"x^"<<curr->data.power;
+            else cout<<"+"<<curr->data.coefficient<<"x^"<<curr->data.power;
+            curr = curr->next;
+        }
     }
-}
-void singleList::listPrintNumber(){
-    listNode* curr = head->next;
-    while(curr!=nullptr){
-        cout<<curr->data.number<<endl;
-        curr = curr->next;
-    }
+    cout<<endl;
 }
 
 // - 头插法建立单链表
@@ -175,8 +177,8 @@ void createList_h(int n, singleList &a){
     listNode* head = a.getHead();
     for(int i=0;i<n;++i){
         listNode* newNode = new listNode;
-        cin>>newNode->data.number;
-        cin>>newNode->data.name;
+        cin>>newNode->data.coefficient;
+        cin>>newNode->data.power;
         newNode->next = head->next;
         head->next = newNode;
         a.lengthIncrease();
@@ -188,8 +190,8 @@ void createList_t(int n,singleList &a){
     listNode* t = a.getHead();
     for(int i=0;i<n;++i){
         listNode* newNode = new listNode;
-        cin>>newNode->data.number;
-        cin>>newNode->data.name;
+        cin>>newNode->data.coefficient;
+        cin>>newNode->data.power;
         t->next = newNode;
         t = newNode;
         a.lengthIncrease();
@@ -219,11 +221,11 @@ void orderListMerge(singleList &A,singleList &B,singleList &C){
     while(a_pivot!=a_length+1&&b_pivot!=b_length+1){
         elemtype a_mid = A.getValue(a_pivot);
         elemtype b_mid = B.getValue(b_pivot);
-        int a_number = a_mid.number, b_number = b_mid.number;
-        if(a_number>b_number){
+        int a_coefficient = a_mid.coefficient, b_coefficient = b_mid.coefficient;
+        if(a_coefficient>b_coefficient){
             C.listInsert(c_pivot, b_mid);
             c_pivot++,b_pivot++;
-        }else if(a_number<b_number){
+        }else if(a_coefficient<b_coefficient){
             C.listInsert(c_pivot, a_mid);
             c_pivot++,a_pivot++;
         }else{
@@ -246,10 +248,46 @@ void orderListMerge(singleList &A,singleList &B,singleList &C){
         }
     }
 }
+// - 稀疏多项式加减法实现
+void polynomialAddition(singleList &A,singleList &B,singleList &C){
+    int a_length = A.listLength(), b_length = B.listLength();
+    int a_pivot = 0, b_pivot = 0, c_pivot = 0;
+    while(a_pivot<=a_length&&b_pivot<=b_length){
+        elemtype a_mid = A.getValue(a_pivot), b_mid = B.getValue(b_pivot);
+        int a_power = a_mid.power, b_power = b_mid.power;
+        if(a_power<b_power){
+            C.listInsert(c_pivot, a_mid);
+            a_pivot++,c_pivot++;
+        }else if(a_power>b_power){
+            C.listInsert(c_pivot, b_mid);
+            c_pivot++,b_pivot++;
+        }else{
+            a_pivot++,b_pivot++;
+            int a_coefficient = a_mid.coefficient, b_coefficient = b_mid.coefficient;
+            if(a_coefficient+b_coefficient){
+                elemtype c_mid(a_coefficient+b_coefficient, a_power);
+                C.listInsert(c_pivot, c_mid);
+                c_pivot++;
+            }
+        }
+    }
+    if(a_pivot<=a_length){
+        for(int i=a_pivot;i<=a_length;++i){
+            elemtype A_mid = A.getValue(i);
+            C.listInsert(c_pivot, A_mid);
+            c_pivot++;
+        }
+    }else if(b_pivot<=b_length){
+        for(int i=b_pivot;i<=b_length;++i){
+            elemtype B_mid = B.getValue(i);
+            C.listInsert(c_pivot, B_mid);
+            c_pivot++;
+        }
+    }
+}
 int main(){
     singleList A,B,C;
     createList_t(5,A);
     createList_t(5,B);
-    orderListMerge(A,B,C);
-    C.listPrintNumber();
+    A.printPolynomial();
 }
